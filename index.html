@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>やばい！少女に囲まれた アイテム交換DB（未来型）</title>
+  <title>やばい！少女に囲まれた 汎用アイテム比較ツール</title>
   <style>
     body {
       font-family: sans-serif;
@@ -23,148 +23,103 @@
     th {
       background-color: #f0f0f0;
     }
-    input[type="text"] {
-      width: 100%;
+    input, select, button {
+      margin: 5px;
       padding: 8px;
-      margin-top: 10px;
-      font-size: 16px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
 
-<h1>やばい！少女に囲まれた アイテム交換データベース</h1>
+<h1>やばい！少女に囲まれた アイテム交換データベース ＋ 汎用比較ツール</h1>
 
-<input type="text" id="searchBox" placeholder="アイテム名で検索...">
+<h2>🎯 あなたの交換条件を入力</h2>
 
-<table id="itemTable">
-  <thead>
-    <tr>
-      <th>アイテム名</th>
-      <th>数量</th>
-      <th>支払い方法</th>
-      <th>割引率</th>
-      <th>ガチャ確率</th>
-      <th>期待値（ダイヤ）</th>
-      <th>入手方法</th>
-      <th>付属アイテム</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<label>支払うアイテム名：<input type="text" id="payItem" placeholder="例: ダイヤ"></label><br>
+<label>支払う数量：<input type="number" id="payAmount" placeholder="例: 20"></label><br>
+<label>もらえるアイテム名：<input type="text" id="receiveItem" placeholder="例: 金貨"></label><br>
+<label>もらえる数量：<input type="number" id="receiveAmount" placeholder="例: 216000"></label><br>
+<button id="compareButton">比較する</button>
+
+<h2>比較結果</h2>
+<div id="compareResult">入力して「比較する」ボタンを押してください。</div>
 
 <script>
-const items = [
+// サンプルデータ（未来型形式）
+const shopItems = [
   {
-    "item_name": "少女経験値",
-    "quantity": 200000,
-    "payment": [{ "type": "ダイヤ", "amount": 200 }],
-    "discount_rate": 40,
-    "location": "ミステリーショップ",
-    "gacha_rate": null,
-    "trial_cost": null,
-    "bonus_items": []
+    "item_name": "金貨100万",
+    "quantity": 1000000,
+    "payment": [{ "type": "ダイヤ", "amount": 150 }],
+    "location": "ミステリーショップ"
   },
   {
     "item_name": "キャラ結晶",
     "quantity": 1,
     "payment": [{ "type": "晶魂", "amount": 50 }],
-    "discount_rate": null,
-    "location": "少女ショップ",
-    "gacha_rate": null,
-    "trial_cost": null,
-    "bonus_items": []
+    "location": "少女ショップ"
   },
   {
-    "item_name": "VIPパックⅠ",
-    "quantity": 1,
-    "payment": [{ "type": "JPY", "amount": 800 }],
-    "discount_rate": null,
-    "location": "ショップ購入",
-    "gacha_rate": null,
-    "trial_cost": null,
-    "bonus_items": [
-      { "item_name": "ダイヤ", "quantity": 300 },
-      { "item_name": "素材セレクトBOXⅡ", "quantity": 2 },
-      { "item_name": "エンゲージメント水晶", "quantity": 50 },
-      { "item_name": "VIP EXP", "quantity": 300 }
-    ]
-  },
-  {
-    "item_name": "★5少女（ガチャ）",
-    "quantity": 1,
+    "item_name": "少女経験値",
+    "quantity": 200000,
     "payment": [{ "type": "ダイヤ", "amount": 200 }],
-    "discount_rate": null,
-    "location": "通常ガチャ",
-    "gacha_rate": 6,
-    "trial_cost": 200,
-    "bonus_items": []
+    "location": "ミステリーショップ"
   }
 ];
 
-// 割引前価格計算
-function calculateNormalPrice(discountedPrice, discountRate) {
-  if (discountedPrice !== null && discountRate !== null) {
-    return (discountedPrice / (1 - discountRate / 100)).toFixed(2);
+// 交換レート計算（支払い単位あたり得られる数）
+function calcRate(payAmount, receiveAmount) {
+  return receiveAmount / payAmount;
+}
+
+// 比較処理
+document.getElementById('compareButton').addEventListener('click', function() {
+  const payItem = document.getElementById('payItem').value.trim();
+  const payAmount = parseFloat(document.getElementById('payAmount').value);
+  const receiveItem = document.getElementById('receiveItem').value.trim();
+  const receiveAmount = parseFloat(document.getElementById('receiveAmount').value);
+
+  if (!payItem || !receiveItem || isNaN(payAmount) || isNaN(receiveAmount)) {
+    document.getElementById('compareResult').innerHTML = 'すべての項目を正しく入力してください！';
+    return;
   }
-  return null;
-}
 
-// ガチャ期待値計算
-function calculateExpectedCost(trialCost, gachaRate) {
-  if (trialCost !== null && gachaRate !== null) {
-    return (trialCost / (gachaRate / 100)).toFixed(2);
-  }
-  return null;
-}
+  const userRate = calcRate(payAmount, receiveAmount);
 
-// 支払い方法の表示
-function formatPayments(payments) {
-  return payments.map(p => `${p.type} ${p.amount}`).join('<br>');
-}
+  let results = `<p>あなたの交換レート：<strong>1 ${payItem} あたり ${userRate.toFixed(2)} ${receiveItem}</strong></p>`;
 
-// 付属アイテムの表示
-function formatBonusItems(bonusItems) {
-  if (bonusItems.length === 0) return 'ー';
-  return bonusItems.map(b => `${b.item_name} ×${b.quantity}`).join('<br>');
-}
+  let shopComparisons = [];
 
-// 表の描画
-function displayItems(data) {
-  const tableBody = document.querySelector('#itemTable tbody');
-  tableBody.innerHTML = '';
-
-  data.forEach(item => {
-    const normalPrice = (item.payment[0]?.type === "ダイヤ" && item.discount_rate)
-      ? calculateNormalPrice(item.payment[0].amount, item.discount_rate) + "ダイヤ"
-      : "ー";
-    const expectedCost = (item.gacha_rate !== null && item.trial_cost !== null)
-      ? calculateExpectedCost(item.trial_cost, item.gacha_rate) + "ダイヤ"
-      : "ー";
-
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${item.item_name}</td>
-      <td>${item.quantity}</td>
-      <td>${formatPayments(item.payment)}</td>
-      <td>${item.discount_rate !== null ? item.discount_rate + "%" : "ー"}</td>
-      <td>${item.gacha_rate !== null ? item.gacha_rate + "%" : "ー"}</td>
-      <td>${expectedCost}</td>
-      <td>${item.location}</td>
-      <td>${formatBonusItems(item.bonus_items)}</td>
-    `;
-    tableBody.appendChild(row);
+  shopItems.forEach(shop => {
+    shop.payment.forEach(payment => {
+      if (payment.type === payItem && shop.item_name.includes(receiveItem)) {
+        const shopRate = calcRate(payment.amount, shop.quantity);
+        shopComparisons.push({
+          location: shop.location,
+          shopRate,
+          shopName: `${payment.amount} ${payment.type} → ${shop.quantity} ${shop.item_name}`
+        });
+      }
+    });
   });
-}
 
-// 初期表示
-displayItems(items);
+  if (shopComparisons.length === 0) {
+    results += `<p>比較対象が見つかりませんでした。</p>`;
+  } else {
+    results += `<table><thead><tr><th>ショップ交換</th><th>交換レート (1 ${payItem} あたり)</th><th>結果</th></tr></thead><tbody>`;
+    shopComparisons.forEach(sc => {
+      const better = (userRate > sc.shopRate) ? "あなたの方がお得！" : "ショップの方がお得！";
+      results += `<tr>
+                    <td>${sc.shopName} @ ${sc.location}</td>
+                    <td>${sc.shopRate.toFixed(2)} ${receiveItem}</td>
+                    <td><strong>${better}</strong></td>
+                  </tr>`;
+    });
+    results += `</tbody></table>`;
+  }
 
-// 検索機能
-document.getElementById('searchBox').addEventListener('input', function(e) {
-  const keyword = e.target.value.toLowerCase();
-  const filtered = items.filter(item => item.item_name.toLowerCase().includes(keyword));
-  displayItems(filtered);
+  document.getElementById('compareResult').innerHTML = results;
 });
 </script>
 
