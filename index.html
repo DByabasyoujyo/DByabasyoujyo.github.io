@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>やばい！少女に囲まれた 汎用アイテム比較ツール（進化版）</title>
+  <title>やばい！少女に囲まれた 汎用アイテム比較データベース</title>
   <style>
     body {
       font-family: sans-serif;
@@ -32,7 +32,7 @@
 </head>
 <body>
 
-<h1>やばい！少女に囲まれた 汎用アイテム比較ツール</h1>
+<h1>やばい！少女に囲まれた アイテム交換DB ＋ 比較ツール</h1>
 
 <h2>🎯 もらう情報を先に入力</h2>
 
@@ -58,31 +58,10 @@
 <div id="compareResult">入力して「比較する」ボタンを押してください。</div>
 
 <script>
-// あなたのスプレッドシートID
-const paymentMasterSheetId = '1hKqWc-_WouU3jR-Wy_-ZbUc9AMlOLz19d9sxYlk45bU'; // 支払いアイテムマスタ
-const itemMasterSheetId = '1L5viaDV32nFQVkIJWPYD_jL3ec5qwlcUKTMZYfTD7ok';    // もらうアイテムマスタ
-
-// 登録済みショップデータ（未来型）
-const shopItems = [
-  {
-    "item_name": "金貨100万",
-    "quantity": 1000000,
-    "payment": [{ "type": "ダイヤ", "amount": 150 }],
-    "location": "ミステリーショップ"
-  },
-  {
-    "item_name": "キャラ結晶",
-    "quantity": 1,
-    "payment": [{ "type": "晶魂", "amount": 50 }],
-    "location": "少女ショップ"
-  },
-  {
-    "item_name": "少女経験値",
-    "quantity": 200000,
-    "payment": [{ "type": "ダイヤ", "amount": 200 }],
-    "location": "ミステリーショップ"
-  }
-];
+// スプレッドシートID
+const paymentMasterSheetId = '1hKqWc-_WouU3jR-Wy_-ZbUc9AMlOLz19d9sxYlk45bU';
+const itemMasterSheetId = '1L5viaDV32nFQVkIJWPYD_jL3ec5qwlcUKTMZYfTD7ok';
+const shopDBSheetId = '1w915GAUC8xBumD6KQPmCX25PlghKi78V2TouDyfCMPA';
 
 // スプレッドシートをJSONで読み込む
 async function loadSheet(sheetId) {
@@ -90,29 +69,49 @@ async function loadSheet(sheetId) {
   const res = await fetch(url);
   const text = await res.text();
   const json = JSON.parse(text.substr(47).slice(0, -2));
-  return json.table.rows.map(row => row.c[0]?.v).filter(v => v);
+  return json.table.rows.map(row => row.c.map(c => c?.v ?? "") );
 }
 
-// マスタ読み込み＋プルダウン作成
+// 初期化処理
 async function init() {
-  const paymentItems = await loadSheet(paymentMasterSheetId);
-  const receiveItems = await loadSheet(itemMasterSheetId);
+  // マスタ読み込み
+  const paymentMaster = await loadSheet(paymentMasterSheetId);
+  const itemMaster = await loadSheet(itemMasterSheetId);
+  const shopDataRaw = await loadSheet(shopDBSheetId);
 
+  // プルダウン作成
   const paySelect = document.getElementById('payItem');
   const receiveSelect = document.getElementById('receiveItem');
 
-  paymentItems.forEach(item => {
+  paymentMaster.forEach(([item]) => {
     const option = document.createElement('option');
     option.value = item;
     option.textContent = item;
     paySelect.appendChild(option);
   });
 
-  receiveItems.forEach(item => {
+  itemMaster.forEach(([item]) => {
     const option = document.createElement('option');
     option.value = item;
     option.textContent = item;
     receiveSelect.appendChild(option);
+  });
+
+  // ショップデータ整形
+  window.shopItems = shopDataRaw.map(row => {
+    const [receiveItemName, receiveQuantity, payItemName, payQuantityDiscounted, discountRate, location] = row;
+    const discountRateNum = parseFloat(discountRate) || 0;
+    const discountedPay = parseFloat(payQuantityDiscounted);
+    const normalPay = (discountRateNum > 0) ? (discountedPay / (1 - discountRateNum / 100)) : discountedPay;
+    return {
+      receiveItemName,
+      receiveQuantity: parseFloat(receiveQuantity),
+      payItemName,
+      payQuantityDiscounted: discountedPay,
+      payQuantityNormal: normalPay,
+      discountRate: discountRateNum,
+      location
+    };
   });
 }
 
@@ -139,17 +138,15 @@ document.getElementById('compareButton').addEventListener('click', function() {
 
   let shopComparisons = [];
 
-  shopItems.forEach(shop => {
-    shop.payment.forEach(payment => {
-      if (payment.type === payItem && shop.item_name.includes(receiveItem)) {
-        const shopRate = calcRate(payment.amount, shop.quantity);
-        shopComparisons.push({
-          location: shop.location,
-          shopRate,
-          shopName: `${payment.amount} ${payment.type} → ${shop.quantity} ${shop.item_name}`
-        });
-      }
-    });
+  window.shopItems.forEach(shop => {
+    if (shop.payItemName === payItem && shop.receiveItemName.includes(receiveItem)) {
+      const shopRate = calcRate(shop.payQuantityDiscounted, shop.receiveQuantity);
+      shopComparisons.push({
+        location: shop.location,
+        shopRate,
+        shopName: `${shop.payQuantityDiscounted} ${shop.payItemName}（割引${shop.discountRate}%） → ${shop.receiveQuantity} ${shop.receiveItemName}`
+      });
+    }
   });
 
   if (shopComparisons.length === 0) {
@@ -170,7 +167,7 @@ document.getElementById('compareButton').addEventListener('click', function() {
   document.getElementById('compareResult').innerHTML = results;
 });
 
-// 初期化
+// 起動
 init();
 </script>
 
