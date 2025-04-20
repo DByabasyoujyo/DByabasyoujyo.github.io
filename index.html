@@ -3,17 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>やばい！少女に囲まれた アイテム交換DB＋比較ツール</title>
+  <title>ヤバ少女 アイテム交換DB＋比較ツール</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: 'Helvetica', 'Arial', sans-serif;
       margin: 20px;
+      background-color: #f9f9f9;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    .form-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      width: 160px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .form-group input,
+    .form-group select {
+      flex: 1;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
-      font-size: 14px;
+      font-size: 13px;
     }
     th, td {
       border: 1px solid #ccc;
@@ -23,223 +62,75 @@
     th {
       background-color: #f0f0f0;
     }
-    input, select, button {
-      margin: 5px;
-      padding: 8px;
-      font-size: 14px;
-    }
     h1, h2 {
-      margin-top: 30px;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
 
-<h1>やばい！少女に囲まれた アイテム交換DB ＋ 比較ツール</h1>
+<h1>ヤバ少女 アイテム交換DB ＋ 比較ツール</h1>
 
-<!-- もらう→支払う情報を入力して比較するエリア -->
-<h2>🎯 アイテム交換比較ツール</h2>
+<div class="card">
+  <h2>🎯 アイテム交換比較ツール</h2>
 
-<label>もらうアイテム名：
-  <select id="receiveItem"></select>
-</label><br>
+  <div class="form-group">
+    <label>もらうアイテム名</label>
+    <select id="receiveItem"></select>
+  </div>
+  <div class="form-group">
+    <label>もらう数量</label>
+    <input type="number" id="receiveAmount" placeholder="例: 216000">
+  </div>
+  <div class="form-group">
+    <label>支払うアイテム名</label>
+    <select id="payItem"></select>
+  </div>
+  <div class="form-group">
+    <label>支払う数量</label>
+    <input type="number" id="payAmount" placeholder="例: 20">
+  </div>
 
-<label>もらう数量：
-  <input type="number" id="receiveAmount" placeholder="例: 216000">
-</label><br>
+  <button id="compareButton">比較する</button>
 
-<label>支払うアイテム名：
-  <select id="payItem"></select>
-</label><br>
+  <div id="compareResult" style="margin-top: 20px;">入力して「比較する」ボタンを押してください。</div>
+</div>
 
-<label>支払う数量：
-  <input type="number" id="payAmount" placeholder="例: 20">
-</label><br>
+<div class="card">
+  <h2>🛒 ショップDBに新しい交換情報を登録</h2>
 
-<button id="compareButton">比較する</button>
+  <div class="form-group">
+    <label>もらうアイテム名</label>
+    <select id="formReceiveItem"></select>
+  </div>
+  <div class="form-group">
+    <label>もらう数量</label>
+    <input type="number" id="formReceiveAmount" placeholder="例: 100000">
+  </div>
+  <div class="form-group">
+    <label>支払うアイテム名</label>
+    <select id="formPayItem"></select>
+  </div>
+  <div class="form-group">
+    <label>支払う数量（割引後）</label>
+    <input type="number" id="formPayAmount" placeholder="例: 150">
+  </div>
+  <div class="form-group">
+    <label>割引率（％）</label>
+    <input type="number" id="formDiscountRate" placeholder="例: 40">
+  </div>
+  <div class="form-group">
+    <label>場所</label>
+    <input type="text" id="formLocation" placeholder="例: ミステリーショップ">
+  </div>
 
-<div id="compareResult">入力して「比較する」ボタンを押してください。</div>
+  <button id="addShopItemButton">登録する</button>
 
-<!-- 新しい交換情報を登録するエリア -->
-<h2>🛒 ショップDBに新しい交換情報を登録</h2>
-
-<label>もらうアイテム名：
-  <select id="formReceiveItem"></select>
-</label><br>
-
-<label>もらう数量：
-  <input type="number" id="formReceiveAmount" placeholder="例: 100000">
-</label><br>
-
-<label>支払うアイテム名：
-  <select id="formPayItem"></select>
-</label><br>
-
-<label>支払う数量（割引後）：
-  <input type="number" id="formPayAmount" placeholder="例: 150">
-</label><br>
-
-<label>割引率（％）：
-  <input type="number" id="formDiscountRate" placeholder="例: 40">
-</label><br>
-
-<label>場所：
-  <input type="text" id="formLocation" placeholder="例: ミステリーショップ">
-</label><br><br>
-
-<button id="addShopItemButton">登録する</button>
-
-<div id="addResult"></div>
+  <div id="addResult" style="margin-top: 20px;"></div>
+</div>
 
 <script>
-// あなたの設定
-const paymentMasterSheetId = '1hKqWc-_WouU3jR-Wy_-ZbUc9AMlOLz19d9sxYlk45bU';
-const itemMasterSheetId = '1L5viaDV32nFQVkIJWPYD_jL3ec5qwlcUKTMZYfTD7ok';
-const shopDBSheetId = '1w915GAUC8xBumD6KQPmCX25PlghKi78V2TouDyfCMPA';
-
-const SHEET_NAME = 'シート1';
-
-// スプレッドシートからデータを読み込む
-async function loadSheet(sheetId) {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
-  const res = await fetch(url);
-  const text = await res.text();
-  const json = JSON.parse(text.substr(47).slice(0, -2));
-  return json.table.rows.map(row => row.c.map(c => c?.v ?? "") );
-}
-
-// 初期化
-async function init() {
-  const paymentMaster = await loadSheet(paymentMasterSheetId);
-  const itemMaster = await loadSheet(itemMasterSheetId);
-  const shopDataRaw = await loadSheet(shopDBSheetId);
-
-  const paySelect = document.getElementById('payItem');
-  const receiveSelect = document.getElementById('receiveItem');
-  const formPaySelect = document.getElementById('formPayItem');
-  const formReceiveSelect = document.getElementById('formReceiveItem');
-
-  paymentMaster.forEach(([item]) => {
-    [paySelect, formPaySelect].forEach(select => {
-      const option = document.createElement('option');
-      option.value = item;
-      option.textContent = item;
-      select.appendChild(option);
-    });
-  });
-
-  itemMaster.forEach(([item]) => {
-    [receiveSelect, formReceiveSelect].forEach(select => {
-      const option = document.createElement('option');
-      option.value = item;
-      option.textContent = item;
-      select.appendChild(option);
-    });
-  });
-
-  window.shopItems = shopDataRaw.map(row => {
-    const [receiveItemName, receiveQuantity, payItemName, payQuantityDiscounted, discountRate, location] = row;
-    const discountRateNum = parseFloat(discountRate) || 0;
-    const discountedPay = parseFloat(payQuantityDiscounted);
-    const normalPay = (discountRateNum > 0) ? (discountedPay / (1 - discountRateNum / 100)) : discountedPay;
-    return {
-      receiveItemName,
-      receiveQuantity: parseFloat(receiveQuantity),
-      payItemName,
-      payQuantityDiscounted: discountedPay,
-      payQuantityNormal: normalPay,
-      discountRate: discountRateNum,
-      location
-    };
-  });
-}
-
-// レート計算
-function calcRate(payAmount, receiveAmount) {
-  return receiveAmount / payAmount;
-}
-
-// 比較処理
-document.getElementById('compareButton').addEventListener('click', function() {
-  const payItem = document.getElementById('payItem').value;
-  const payAmount = parseFloat(document.getElementById('payAmount').value);
-  const receiveItem = document.getElementById('receiveItem').value;
-  const receiveAmount = parseFloat(document.getElementById('receiveAmount').value);
-
-  if (!payItem || !receiveItem || isNaN(payAmount) || isNaN(receiveAmount)) {
-    document.getElementById('compareResult').innerHTML = 'すべての項目を正しく入力してください！';
-    return;
-  }
-
-  const userRate = calcRate(payAmount, receiveAmount);
-
-  let results = `<p>あなたの交換レート：<strong>1 ${payItem} あたり ${userRate.toFixed(2)} ${receiveItem}</strong></p>`;
-
-  let shopComparisons = [];
-
-  window.shopItems.forEach(shop => {
-    if (shop.payItemName === payItem && shop.receiveItemName.includes(receiveItem)) {
-      const shopRate = calcRate(shop.payQuantityDiscounted, shop.receiveQuantity);
-      shopComparisons.push({
-        location: shop.location,
-        shopRate,
-        shopName: `${shop.payQuantityDiscounted} ${shop.payItemName}（割引${shop.discountRate}%） → ${shop.receiveQuantity} ${shop.receiveItemName}`
-      });
-    }
-  });
-
-  if (shopComparisons.length === 0) {
-    results += `<p>比較対象が見つかりませんでした。</p>`;
-  } else {
-    results += `<table><thead><tr><th>ショップ交換</th><th>交換レート (1 ${payItem} あたり)</th><th>結果</th></tr></thead><tbody>`;
-    shopComparisons.forEach(sc => {
-      const better = (userRate > sc.shopRate) ? "あなたの方がお得！" : "ショップの方がお得！";
-      results += `<tr>
-                    <td>${sc.shopName} @ ${sc.location}</td>
-                    <td>${sc.shopRate.toFixed(2)} ${receiveItem}</td>
-                    <td><strong>${better}</strong></td>
-                  </tr>`;
-    });
-    results += `</tbody></table>`;
-  }
-
-  document.getElementById('compareResult').innerHTML = results;
-});
-
-// ローカルDBに新しいデータを追加する処理
-document.getElementById('addShopItemButton').addEventListener('click', function() {
-  const receiveItem = document.getElementById('formReceiveItem').value;
-  const receiveAmount = parseFloat(document.getElementById('formReceiveAmount').value);
-  const payItem = document.getElementById('formPayItem').value;
-  const payAmount = parseFloat(document.getElementById('formPayAmount').value);
-  const discountRate = parseFloat(document.getElementById('formDiscountRate').value) || 0;
-  const location = document.getElementById('formLocation').value;
-
-  if (!receiveItem || isNaN(receiveAmount) || !payItem || isNaN(payAmount) || !location) {
-    document.getElementById('addResult').innerText = 'すべての項目を正しく入力してください！';
-    return;
-  }
-
-  const normalPay = (discountRate > 0) ? (payAmount / (1 - discountRate / 100)) : payAmount;
-
-  const newItem = {
-    receiveItemName: receiveItem,
-    receiveQuantity: receiveAmount,
-    payItemName: payItem,
-    payQuantityDiscounted: payAmount,
-    payQuantityNormal: normalPay,
-    discountRate: discountRate,
-    location: location
-  };
-
-  window.shopItems.push(newItem); // ローカルDBに追加！！！
-
-  document.getElementById('addResult').innerText = '登録成功！🎉';
-  console.log('新しいショップデータが追加されました', newItem);
-});
-
-// ページ起動時に初期化
-init();
+// （ここに続きのJavaScript、前に作ったやつを入れていく）
 </script>
 
 </body>
