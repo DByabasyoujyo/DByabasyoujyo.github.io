@@ -3,10 +3,170 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ヤバ少女 アイテムデータベース</title>
+  <title>やばい！少女に囲まれた アイテム交換DB（未来型）</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-  <h1>ようこそ！</h1>
-  <p>ここではヤバ少女のアイテム交換比率を比較できます。</p>
+
+<h1>やばい！少女に囲まれた アイテム交換データベース</h1>
+
+<input type="text" id="searchBox" placeholder="アイテム名で検索...">
+
+<table id="itemTable">
+  <thead>
+    <tr>
+      <th>アイテム名</th>
+      <th>数量</th>
+      <th>支払い方法</th>
+      <th>割引率</th>
+      <th>ガチャ確率</th>
+      <th>期待値（ダイヤ）</th>
+      <th>入手方法</th>
+      <th>付属アイテム</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const items = [
+  {
+    "item_name": "少女経験値",
+    "quantity": 200000,
+    "payment": [{ "type": "ダイヤ", "amount": 200 }],
+    "discount_rate": 40,
+    "location": "ミステリーショップ",
+    "gacha_rate": null,
+    "trial_cost": null,
+    "bonus_items": []
+  },
+  {
+    "item_name": "キャラ結晶",
+    "quantity": 1,
+    "payment": [{ "type": "晶魂", "amount": 50 }],
+    "discount_rate": null,
+    "location": "少女ショップ",
+    "gacha_rate": null,
+    "trial_cost": null,
+    "bonus_items": []
+  },
+  {
+    "item_name": "VIPパックⅠ",
+    "quantity": 1,
+    "payment": [{ "type": "JPY", "amount": 800 }],
+    "discount_rate": null,
+    "location": "ショップ購入",
+    "gacha_rate": null,
+    "trial_cost": null,
+    "bonus_items": [
+      { "item_name": "ダイヤ", "quantity": 300 },
+      { "item_name": "素材セレクトBOXⅡ", "quantity": 2 },
+      { "item_name": "エンゲージメント水晶", "quantity": 50 },
+      { "item_name": "VIP EXP", "quantity": 300 }
+    ]
+  },
+  {
+    "item_name": "★5少女（ガチャ）",
+    "quantity": 1,
+    "payment": [{ "type": "ダイヤ", "amount": 200 }],
+    "discount_rate": null,
+    "location": "通常ガチャ",
+    "gacha_rate": 6,
+    "trial_cost": 200,
+    "bonus_items": []
+  }
+];
+
+// 割引前価格計算
+function calculateNormalPrice(discountedPrice, discountRate) {
+  if (discountedPrice !== null && discountRate !== null) {
+    return (discountedPrice / (1 - discountRate / 100)).toFixed(2);
+  }
+  return null;
+}
+
+// ガチャ期待値計算
+function calculateExpectedCost(trialCost, gachaRate) {
+  if (trialCost !== null && gachaRate !== null) {
+    return (trialCost / (gachaRate / 100)).toFixed(2);
+  }
+  return null;
+}
+
+// 支払い方法の表示
+function formatPayments(payments) {
+  return payments.map(p => `${p.type} ${p.amount}`).join('<br>');
+}
+
+// 付属アイテムの表示
+function formatBonusItems(bonusItems) {
+  if (bonusItems.length === 0) return 'ー';
+  return bonusItems.map(b => `${b.item_name} ×${b.quantity}`).join('<br>');
+}
+
+// 表の描画
+function displayItems(data) {
+  const tableBody = document.querySelector('#itemTable tbody');
+  tableBody.innerHTML = '';
+
+  data.forEach(item => {
+    const normalPrice = (item.payment[0]?.type === "ダイヤ" && item.discount_rate)
+      ? calculateNormalPrice(item.payment[0].amount, item.discount_rate) + "ダイヤ"
+      : "ー";
+    const expectedCost = (item.gacha_rate !== null && item.trial_cost !== null)
+      ? calculateExpectedCost(item.trial_cost, item.gacha_rate) + "ダイヤ"
+      : "ー";
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${item.item_name}</td>
+      <td>${item.quantity}</td>
+      <td>${formatPayments(item.payment)}</td>
+      <td>${item.discount_rate !== null ? item.discount_rate + "%" : "ー"}</td>
+      <td>${item.gacha_rate !== null ? item.gacha_rate + "%" : "ー"}</td>
+      <td>${expectedCost}</td>
+      <td>${item.location}</td>
+      <td>${formatBonusItems(item.bonus_items)}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+// 初期表示
+displayItems(items);
+
+// 検索機能
+document.getElementById('searchBox').addEventListener('input', function(e) {
+  const keyword = e.target.value.toLowerCase();
+  const filtered = items.filter(item => item.item_name.toLowerCase().includes(keyword));
+  displayItems(filtered);
+});
+</script>
+
 </body>
 </html>
