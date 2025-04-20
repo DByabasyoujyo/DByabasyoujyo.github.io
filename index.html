@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>やばい！少女に囲まれた 汎用アイテム比較データベース</title>
+  <title>やばい！少女に囲まれた アイテム交換DB＋比較ツール</title>
   <style>
     body {
       font-family: sans-serif;
@@ -28,13 +28,17 @@
       padding: 8px;
       font-size: 14px;
     }
+    h1, h2 {
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
 
 <h1>やばい！少女に囲まれた アイテム交換DB ＋ 比較ツール</h1>
 
-<h2>🎯 もらう情報を先に入力</h2>
+<!-- もらう→支払う情報を入力して比較するエリア -->
+<h2>🎯 アイテム交換比較ツール</h2>
 
 <label>もらうアイテム名：
   <select id="receiveItem"></select>
@@ -54,16 +58,48 @@
 
 <button id="compareButton">比較する</button>
 
-<h2>比較結果</h2>
 <div id="compareResult">入力して「比較する」ボタンを押してください。</div>
 
+<!-- 新しい交換情報を登録するエリア -->
+<h2>🛒 ショップDBに新しい交換情報を登録</h2>
+
+<label>もらうアイテム名：
+  <select id="formReceiveItem"></select>
+</label><br>
+
+<label>もらう数量：
+  <input type="number" id="formReceiveAmount" placeholder="例: 100000">
+</label><br>
+
+<label>支払うアイテム名：
+  <select id="formPayItem"></select>
+</label><br>
+
+<label>支払う数量（割引後）：
+  <input type="number" id="formPayAmount" placeholder="例: 150">
+</label><br>
+
+<label>割引率（％）：
+  <input type="number" id="formDiscountRate" placeholder="例: 40">
+</label><br>
+
+<label>場所：
+  <input type="text" id="formLocation" placeholder="例: ミステリーショップ">
+</label><br><br>
+
+<button id="addShopItemButton">登録する</button>
+
+<div id="addResult"></div>
+
 <script>
-// スプレッドシートID
+// あなたの設定
 const paymentMasterSheetId = '1hKqWc-_WouU3jR-Wy_-ZbUc9AMlOLz19d9sxYlk45bU';
 const itemMasterSheetId = '1L5viaDV32nFQVkIJWPYD_jL3ec5qwlcUKTMZYfTD7ok';
 const shopDBSheetId = '1w915GAUC8xBumD6KQPmCX25PlghKi78V2TouDyfCMPA';
 
-// スプレッドシートをJSONで読み込む
+const SHEET_NAME = 'シート1';
+
+// スプレッドシートからデータを読み込む
 async function loadSheet(sheetId) {
   const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
   const res = await fetch(url);
@@ -72,32 +108,35 @@ async function loadSheet(sheetId) {
   return json.table.rows.map(row => row.c.map(c => c?.v ?? "") );
 }
 
-// 初期化処理
+// 初期化
 async function init() {
-  // マスタ読み込み
   const paymentMaster = await loadSheet(paymentMasterSheetId);
   const itemMaster = await loadSheet(itemMasterSheetId);
   const shopDataRaw = await loadSheet(shopDBSheetId);
 
-  // プルダウン作成
   const paySelect = document.getElementById('payItem');
   const receiveSelect = document.getElementById('receiveItem');
+  const formPaySelect = document.getElementById('formPayItem');
+  const formReceiveSelect = document.getElementById('formReceiveItem');
 
   paymentMaster.forEach(([item]) => {
-    const option = document.createElement('option');
-    option.value = item;
-    option.textContent = item;
-    paySelect.appendChild(option);
+    [paySelect, formPaySelect].forEach(select => {
+      const option = document.createElement('option');
+      option.value = item;
+      option.textContent = item;
+      select.appendChild(option);
+    });
   });
 
   itemMaster.forEach(([item]) => {
-    const option = document.createElement('option');
-    option.value = item;
-    option.textContent = item;
-    receiveSelect.appendChild(option);
+    [receiveSelect, formReceiveSelect].forEach(select => {
+      const option = document.createElement('option');
+      option.value = item;
+      option.textContent = item;
+      select.appendChild(option);
+    });
   });
 
-  // ショップデータ整形
   window.shopItems = shopDataRaw.map(row => {
     const [receiveItemName, receiveQuantity, payItemName, payQuantityDiscounted, discountRate, location] = row;
     const discountRateNum = parseFloat(discountRate) || 0;
@@ -167,7 +206,39 @@ document.getElementById('compareButton').addEventListener('click', function() {
   document.getElementById('compareResult').innerHTML = results;
 });
 
-// 起動
+// ローカルDBに新しいデータを追加する処理
+document.getElementById('addShopItemButton').addEventListener('click', function() {
+  const receiveItem = document.getElementById('formReceiveItem').value;
+  const receiveAmount = parseFloat(document.getElementById('formReceiveAmount').value);
+  const payItem = document.getElementById('formPayItem').value;
+  const payAmount = parseFloat(document.getElementById('formPayAmount').value);
+  const discountRate = parseFloat(document.getElementById('formDiscountRate').value) || 0;
+  const location = document.getElementById('formLocation').value;
+
+  if (!receiveItem || isNaN(receiveAmount) || !payItem || isNaN(payAmount) || !location) {
+    document.getElementById('addResult').innerText = 'すべての項目を正しく入力してください！';
+    return;
+  }
+
+  const normalPay = (discountRate > 0) ? (payAmount / (1 - discountRate / 100)) : payAmount;
+
+  const newItem = {
+    receiveItemName: receiveItem,
+    receiveQuantity: receiveAmount,
+    payItemName: payItem,
+    payQuantityDiscounted: payAmount,
+    payQuantityNormal: normalPay,
+    discountRate: discountRate,
+    location: location
+  };
+
+  window.shopItems.push(newItem); // ローカルDBに追加！！！
+
+  document.getElementById('addResult').innerText = '登録成功！🎉';
+  console.log('新しいショップデータが追加されました', newItem);
+});
+
+// ページ起動時に初期化
 init();
 </script>
 
