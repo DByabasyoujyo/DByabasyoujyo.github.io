@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>やばい！少女に囲まれた 汎用アイテム比較ツール</title>
+  <title>やばい！少女に囲まれた 汎用アイテム比較ツール（進化版）</title>
   <style>
     body {
       font-family: sans-serif;
@@ -32,21 +32,37 @@
 </head>
 <body>
 
-<h1>やばい！少女に囲まれた アイテム交換データベース ＋ 汎用比較ツール</h1>
+<h1>やばい！少女に囲まれた 汎用アイテム比較ツール</h1>
 
-<h2>🎯 あなたの交換条件を入力</h2>
+<h2>🎯 もらう情報を先に入力</h2>
 
-<label>支払うアイテム名：<input type="text" id="payItem" placeholder="例: ダイヤ"></label><br>
-<label>支払う数量：<input type="number" id="payAmount" placeholder="例: 20"></label><br>
-<label>もらえるアイテム名：<input type="text" id="receiveItem" placeholder="例: 金貨"></label><br>
-<label>もらえる数量：<input type="number" id="receiveAmount" placeholder="例: 216000"></label><br>
+<label>もらうアイテム名：
+  <select id="receiveItem"></select>
+</label><br>
+
+<label>もらう数量：
+  <input type="number" id="receiveAmount" placeholder="例: 216000">
+</label><br>
+
+<label>支払うアイテム名：
+  <select id="payItem"></select>
+</label><br>
+
+<label>支払う数量：
+  <input type="number" id="payAmount" placeholder="例: 20">
+</label><br>
+
 <button id="compareButton">比較する</button>
 
 <h2>比較結果</h2>
 <div id="compareResult">入力して「比較する」ボタンを押してください。</div>
 
 <script>
-// サンプルデータ（未来型形式）
+// あなたのスプレッドシートID
+const paymentMasterSheetId = '1hKqWc-_WouU3jR-Wy_-ZbUc9AMlOLz19d9sxYlk45bU'; // 支払いアイテムマスタ
+const itemMasterSheetId = '1L5viaDV32nFQVkIJWPYD_jL3ec5qwlcUKTMZYfTD7ok';    // もらうアイテムマスタ
+
+// 登録済みショップデータ（未来型）
 const shopItems = [
   {
     "item_name": "金貨100万",
@@ -68,16 +84,48 @@ const shopItems = [
   }
 ];
 
-// 交換レート計算（支払い単位あたり得られる数）
+// スプレッドシートをJSONで読み込む
+async function loadSheet(sheetId) {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+  const res = await fetch(url);
+  const text = await res.text();
+  const json = JSON.parse(text.substr(47).slice(0, -2));
+  return json.table.rows.map(row => row.c[0]?.v).filter(v => v);
+}
+
+// マスタ読み込み＋プルダウン作成
+async function init() {
+  const paymentItems = await loadSheet(paymentMasterSheetId);
+  const receiveItems = await loadSheet(itemMasterSheetId);
+
+  const paySelect = document.getElementById('payItem');
+  const receiveSelect = document.getElementById('receiveItem');
+
+  paymentItems.forEach(item => {
+    const option = document.createElement('option');
+    option.value = item;
+    option.textContent = item;
+    paySelect.appendChild(option);
+  });
+
+  receiveItems.forEach(item => {
+    const option = document.createElement('option');
+    option.value = item;
+    option.textContent = item;
+    receiveSelect.appendChild(option);
+  });
+}
+
+// レート計算
 function calcRate(payAmount, receiveAmount) {
   return receiveAmount / payAmount;
 }
 
 // 比較処理
 document.getElementById('compareButton').addEventListener('click', function() {
-  const payItem = document.getElementById('payItem').value.trim();
+  const payItem = document.getElementById('payItem').value;
   const payAmount = parseFloat(document.getElementById('payAmount').value);
-  const receiveItem = document.getElementById('receiveItem').value.trim();
+  const receiveItem = document.getElementById('receiveItem').value;
   const receiveAmount = parseFloat(document.getElementById('receiveAmount').value);
 
   if (!payItem || !receiveItem || isNaN(payAmount) || isNaN(receiveAmount)) {
@@ -121,6 +169,9 @@ document.getElementById('compareButton').addEventListener('click', function() {
 
   document.getElementById('compareResult').innerHTML = results;
 });
+
+// 初期化
+init();
 </script>
 
 </body>
