@@ -1,4 +1,4 @@
-<script>
+
 // あなたの設定
 const paymentMasterSheetId = '1hKqWc-_WouU3jR-Wy_-ZbUc9AMlOLz19d9sxYlk45bU';
 const itemMasterSheetId = '1L5viaDV32nFQVkIJWPYD_jL3ec5qwlcUKTMZYfTD7ok';
@@ -143,4 +143,4 @@ document.getElementById('addShopItemButton').addEventListener('click', function(
 
 // ページ起動時にデータ読み込み
 init();
-</script>
+
