@@ -124,11 +124,14 @@ document.getElementById('uploadButton').addEventListener('click', () => {
   reader.readAsText(file);
 });
 
-// CSV文字列を配列に変換
+
+// CSV文字列を配列に変換（ヘッダスキップ版）
 function parseCSV(text) {
   const rows = text.trim().split('\n');
-  return rows.map(row => row.split(','));
+  const dataRows = rows.slice(1); // 最初の1行（ヘッダ）を除外
+  return dataRows.map(row => row.split(','));
 }
+
 
 // スプレッドシートにデータをアップロード
 async function uploadToSheet(values) {
