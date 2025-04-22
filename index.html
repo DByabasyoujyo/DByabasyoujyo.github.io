@@ -87,14 +87,22 @@ function maybeEnableButtons() {
   }
 }
 
-// CSVをパース（PapaParse使用）
 function parseCSV(text) {
   const results = Papa.parse(text.trim(), {
     header: false,
     skipEmptyLines: true,
   });
-  return results.data.slice(1); // 最初の行（ヘッダー）を無視
+
+  // 1セルにまとめられてたらカンマsplitし直す
+  return results.data.slice(1).map(row => {
+    if (row.length === 1) {
+      return row[0].split(',').map(cell => cell.trim());
+    } else {
+      return row.map(cell => cell.trim());
+    }
+  });
 }
+
 
 // スプレッドシートにアップロード
 async function uploadToSheet(values) {
