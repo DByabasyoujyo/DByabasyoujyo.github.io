@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ヤバ少女 アイテム交換DB＋比較ツール</title>
+  <title>ヤバ少女 アイテム交換DB＋比較ツール＋CSVアップロード</title>
   <style>
     body {
       font-family: 'Helvetica', 'Arial', sans-serif;
@@ -18,22 +18,7 @@
       margin-bottom: 30px;
     }
     .form-group {
-      display: flex;
-      align-items: center;
       margin-bottom: 15px;
-    }
-    .form-group label {
-      width: 160px;
-      font-weight: bold;
-      font-size: 14px;
-    }
-    .form-group input,
-    .form-group select {
-      flex: 1;
-      padding: 8px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
     }
     button {
       background-color: #007bff;
@@ -48,97 +33,27 @@
     button:hover {
       background-color: #0056b3;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 13px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #f0f0f0;
-    }
-    h1, h2 {
-      margin-bottom: 20px;
-    }
   </style>
 
-  <!-- Google APIロード -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
 </head>
 
 <body>
 
-<h1>ヤバ少女 アイテム交換DB ＋ 比較ツール</h1>
+<h1>ヤバ少女 アイテム交換DB ＋ 比較ツール ＋ CSVアップロード</h1>
 
 <div class="card">
-  <h2>🎯 アイテム交換比較ツール</h2>
-
-  <div class="form-group">
-    <label>もらうアイテム名</label>
-    <select id="receiveItem"></select>
-  </div>
-  <div class="form-group">
-    <label>もらう数量</label>
-    <input type="number" id="receiveAmount" placeholder="例: 216000">
-  </div>
-  <div class="form-group">
-    <label>支払うアイテム名</label>
-    <select id="payItem"></select>
-  </div>
-  <div class="form-group">
-    <label>支払う数量</label>
-    <input type="number" id="payAmount" placeholder="例: 20">
-  </div>
-
-  <button id="compareButton">比較する</button>
-
-  <div id="compareResult" style="margin-top: 20px;">入力して「比較する」ボタンを押してください。</div>
+  <h2>Googleログイン</h2>
+  <button id="loginButton">Googleでログイン</button>
 </div>
 
 <div class="card">
-  <h2>🛒 ショップDBに新しい交換情報を登録</h2>
-
-  <div class="form-group">
-    <label>もらうアイテム名</label>
-    <select id="formReceiveItem"></select>
-  </div>
-  <div class="form-group">
-    <label>もらう数量</label>
-    <input type="number" id="formReceiveAmount" placeholder="例: 100000">
-  </div>
-  <div class="form-group">
-    <label>支払うアイテム名</label>
-    <select id="formPayItem"></select>
-  </div>
-  <div class="form-group">
-    <label>支払う数量（割引後）</label>
-    <input type="number" id="formPayAmount" placeholder="例: 150">
-  </div>
-  <div class="form-group">
-    <label>割引率（％）</label>
-    <input type="number" id="formDiscountRate" placeholder="例: 40">
-  </div>
-  <div class="form-group">
-    <label>場所</label>
-    <input type="text" id="formLocation" placeholder="例: ミステリーショップ">
-  </div>
-
-  <button id="addShopItemButton">登録する</button>
-
-  <div id="addResult" style="margin-top: 20px;"></div>
+  <h2>CSVファイルをアップロード</h2>
+  <input type="file" id="csvFileInput" accept=".csv">
+  <button id="uploadButton" disabled>アップロードしてスプレッドシートに登録</button>
+  <div id="uploadResult" style="margin-top: 10px;"></div>
 </div>
-
-<div style="margin-top: 30px;">
-  <button id="loginButton">Googleでログインしてスプレッドシートに登録</button>
-</div>
-
-<script src="script.js"></script>
 
 <script>
 const CLIENT_ID = '374744279132-36vqeqdcms1ei8vbrpspmesjqsqg7c2p.apps.googleusercontent.com';
@@ -172,7 +87,7 @@ function gisLoaded() {
         console.error(tokenResponse);
         return;
       }
-      writeData();
+      document.getElementById('uploadButton').disabled = false;
     },
   });
   gisInited = true;
@@ -185,26 +100,53 @@ function maybeEnableButtons() {
   }
 }
 
-async function writeData() {
-  const values = [
-    ["テストアイテム", 1000, "ダイヤ", 200, 0, "テストショップ"]
-  ];
-  const body = {
-    values: values
-  };
-  const response = await gapi.client.sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: "シート1!A:F",
-    valueInputOption: "USER_ENTERED",
-    resource: body,
-  });
-  console.log('書き込み成功:', response);
-  alert('スプレッドシートに書き込み成功しました');
-}
-
 document.getElementById('loginButton').addEventListener('click', () => {
   tokenClient.requestAccessToken();
 });
+
+// CSVアップロード処理
+document.getElementById('uploadButton').addEventListener('click', () => {
+  const fileInput = document.getElementById('csvFileInput');
+  if (!fileInput.files.length) {
+    alert('CSVファイルを選んでください。');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = async (e) => {
+    const text = e.target.result;
+    const data = parseCSV(text);
+    await uploadToSheet(data);
+  };
+
+  reader.readAsText(file);
+});
+
+// CSV文字列を配列に変換
+function parseCSV(text) {
+  const rows = text.trim().split('\n');
+  return rows.map(row => row.split(','));
+}
+
+// スプレッドシートにデータをアップロード
+async function uploadToSheet(values) {
+  const body = { values };
+  try {
+    const response = await gapi.client.sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "シート1!A:F",
+      valueInputOption: "USER_ENTERED",
+      resource: body,
+    });
+    document.getElementById('uploadResult').innerText = 'アップロード成功しました';
+    console.log('書き込み成功:', response);
+  } catch (error) {
+    document.getElementById('uploadResult').innerText = 'アップロード失敗しました';
+    console.error('エラー:', error);
+  }
+}
 
 window.onload = () => {
   gapiLoaded();
