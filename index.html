@@ -10,31 +10,6 @@
       margin: 20px;
       background-color: #f9f9f9;
     }
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
-    .form-group {
-      display: flex;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-    .form-group label {
-      width: 160px;
-      font-weight: bold;
-      font-size: 14px;
-    }
-    .form-group input,
-    .form-group select {
-      flex: 1;
-      padding: 8px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
     button {
       background-color: #007bff;
       color: white;
@@ -48,148 +23,97 @@
     button:hover {
       background-color: #0056b3;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 13px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #f0f0f0;
-    }
-    h1, h2 {
-      margin-bottom: 20px;
-    }
   </style>
 </head>
 <body>
 
 <h1>ヤバ少女 アイテム交換DB ＋ 比較ツール</h1>
 
-<div class="card">
-  <h2>🎯 アイテム交換比較ツール</h2>
-
-  <div class="form-group">
-    <label>もらうアイテム名</label>
-    <select id="receiveItem"></select>
-  </div>
-  <div class="form-group">
-    <label>もらう数量</label>
-    <input type="number" id="receiveAmount" placeholder="例: 216000">
-  </div>
-  <div class="form-group">
-    <label>支払うアイテム名</label>
-    <select id="payItem"></select>
-  </div>
-  <div class="form-group">
-    <label>支払う数量</label>
-    <input type="number" id="payAmount" placeholder="例: 20">
-  </div>
-
-  <button id="compareButton">比較する</button>
-
-  <div id="compareResult" style="margin-top: 20px;">入力して「比較する」ボタンを押してください。</div>
-</div>
-
-<div class="card">
-  <h2>🛒 ショップDBに新しい交換情報を登録</h2>
-
-  <div class="form-group">
-    <label>もらうアイテム名</label>
-    <select id="formReceiveItem"></select>
-  </div>
-  <div class="form-group">
-    <label>もらう数量</label>
-    <input type="number" id="formReceiveAmount" placeholder="例: 100000">
-  </div>
-  <div class="form-group">
-    <label>支払うアイテム名</label>
-    <select id="formPayItem"></select>
-  </div>
-  <div class="form-group">
-    <label>支払う数量（割引後）</label>
-    <input type="number" id="formPayAmount" placeholder="例: 150">
-  </div>
-  <div class="form-group">
-    <label>割引率（％）</label>
-    <input type="number" id="formDiscountRate" placeholder="例: 40">
-  </div>
-  <div class="form-group">
-    <label>場所</label>
-    <input type="text" id="formLocation" placeholder="例: ミステリーショップ">
-  </div>
-
-  <button id="addShopItemButton">登録する</button>
-
-  <div id="addResult" style="margin-top: 20px;"></div>
-</div>
 <!-- Googleログインボタン -->
 <div style="margin-top: 30px;">
   <button id="loginButton">Googleでログインしてスプレッドシートに登録</button>
 </div>
-  
-<!-- Google APIロード -->
-<script src="https://apis.google.com/js/api.js"></script>
+
+<!-- Google APIロード（Identity Services） -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-
-<!-- その後に、自分のJS（script.jsとか、ログインコード）を読み込む -->
-<script src="script.js"></script>
-
-
+<script src="https://apis.google.com/js/api.js"></script>
 
 <script>
+// あなたの情報を設定
 const CLIENT_ID = '374744279132-36vqeqdcms1ei8vbrpspmesjqsqg7c2p.apps.googleusercontent.com';
-const API_KEY = 'AIzaSyBY-D0xi3QAaMQ3crvs8S0hvmG8fY8c4JA';  // すでに持ってるAPIキー！
-const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
-const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+const API_KEY = 'AIzaSyBY-D0xi3QAaMQ3crvs8S0hvmG8fY8c4JA';
+const SPREADSHEET_ID = '1w915GAUC8xBumD6KQPmCX25PlghKi78V2TouDyfCMPA';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
-const SPREADSHEET_ID = '1w915GAUC8xBumD6KQPmCX25PlghKi78V2TouDyfCMPA';  // あなたのシートID
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
 
-document.getElementById('loginButton').onclick = () => {
-  gapi.load('client:auth2', () => {
-    gapi.client.init({
-      apiKey: API_KEY,
-      clientId: CLIENT_ID,
-      discoveryDocs: DISCOVERY_DOCS,
-      scope: SCOPES
-    }).then(() => {
-      return gapi.auth2.getAuthInstance().signIn();
-    }).then(() => {
-      console.log("認証成功！");
-      writeData();  // 認証できたらスプレッドシートに書き込む！
-    }).catch(error => {
-      console.error("認証エラー:", error);
-    });
+// GAPI初期化
+function gapiLoaded() {
+  gapi.load('client', initializeGapiClient);
+}
+
+async function initializeGapiClient() {
+  await gapi.client.init({
+    apiKey: API_KEY,
+    discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
   });
-};
+  gapiInited = true;
+  maybeEnableButtons();
+}
 
-// データ書き込み関数
-function writeData() {
+// GIS初期化
+function gisLoaded() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (tokenResponse) => {
+      if (tokenResponse.error) {
+        throw (tokenResponse);
+      }
+      writeData();  // トークン取得後、書き込み開始
+    },
+  });
+  gisInited = true;
+  maybeEnableButtons();
+}
+
+// ボタンを使えるようにする
+function maybeEnableButtons() {
+  if (gapiInited && gisInited) {
+    document.getElementById('loginButton').disabled = false;
+  }
+}
+
+// 書き込み処理
+async function writeData() {
   const values = [
     ["テストアイテム", 1000, "ダイヤ", 200, 0, "テストショップ"]
   ];
-
   const body = {
     values: values
   };
-
-  gapi.client.sheets.spreadsheets.values.append({
+  const response = await gapi.client.sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: "シート1!A:F",
     valueInputOption: "USER_ENTERED",
-    resource: body
-  }).then(response => {
-    console.log("データ書き込み成功！", response);
-    alert("スプレッドシートに書き込み成功！🎉");
-  }, error => {
-    console.error("書き込みエラー:", error);
+    resource: body,
   });
+  console.log('書き込み成功:', response);
+  alert('スプレッドシートに書き込み成功！🎉');
 }
+
+// ログインボタン押したとき
+document.getElementById('loginButton').addEventListener('click', () => {
+  tokenClient.requestAccessToken();
+});
+
+// ライブラリロード完了時に呼ばれる
+window.onload = () => {
+  gapiLoaded();
+  gisLoaded();
+};
 </script>
 
 </body>
