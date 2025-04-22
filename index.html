@@ -5,42 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ヤバ少女 アイテム交換DB＋比較ツール＋CSVアップロード</title>
   <style>
-    body {
-      font-family: 'Helvetica', 'Arial', sans-serif;
-      margin: 20px;
-      background-color: #f9f9f9;
-    }
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    button {
-      background-color: #007bff;
-      color: white;
-      padding: 10px 20px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 5px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
+    body { font-family: 'Helvetica', 'Arial', sans-serif; margin: 20px; background-color: #f9f9f9; }
+    .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 30px; }
+    .form-group { display: flex; align-items: center; margin-bottom: 15px; }
+    .form-group label { width: 160px; font-weight: bold; font-size: 14px; }
+    .form-group input, .form-group select { flex: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+    button { background-color: #007bff; color: white; padding: 10px 20px; margin-top: 10px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    h1, h2 { margin-bottom: 20px; }
   </style>
-
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
 </head>
-
 <body>
-
 <h1>ヤバ少女 アイテム交換DB ＋ 比較ツール ＋ CSVアップロード</h1>
 
 <div class="card">
@@ -49,9 +29,9 @@
 </div>
 
 <div class="card">
-  <h2>CSVファイルをアップロード</h2>
+  <h2>CSVアップロード</h2>
   <input type="file" id="csvFileInput" accept=".csv">
-  <button id="uploadButton" disabled>アップロードしてスプレッドシートに登録</button>
+  <button id="uploadButton" disabled>アップロード</button>
   <div id="uploadResult" style="margin-top: 10px;"></div>
 </div>
 
@@ -104,38 +84,30 @@ document.getElementById('loginButton').addEventListener('click', () => {
   tokenClient.requestAccessToken();
 });
 
-// CSVアップロード処理
 document.getElementById('uploadButton').addEventListener('click', () => {
   const fileInput = document.getElementById('csvFileInput');
   if (!fileInput.files.length) {
-    alert('CSVファイルを選んでください。');
+    alert('CSVファイルを選択してください');
     return;
   }
-
   const file = fileInput.files[0];
   const reader = new FileReader();
-
   reader.onload = async (e) => {
     const text = e.target.result;
     const data = parseCSV(text);
     await uploadToSheet(data);
   };
-
   reader.readAsText(file);
 });
 
-
-// CSV文字列を配列に変換（ヘッダスキップ＋クオート除去版）
 function parseCSV(text) {
   const rows = text.trim().split('\n');
-  const dataRows = rows.slice(1); // 最初の1行（ヘッダ）を除外
+  const dataRows = rows.slice(1); // ヘッダスキップ
   return dataRows.map(row => {
-    return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
+    return row.split(',').map(cell => cell.replace(/^"|"$/g, '').trim());
   });
 }
 
-
-// スプレッドシートにデータをアップロード
 async function uploadToSheet(values) {
   const body = { values };
   try {
@@ -145,10 +117,10 @@ async function uploadToSheet(values) {
       valueInputOption: "USER_ENTERED",
       resource: body,
     });
-    document.getElementById('uploadResult').innerText = 'アップロード成功しました';
+    document.getElementById('uploadResult').innerText = 'アップロード成功';
     console.log('書き込み成功:', response);
   } catch (error) {
-    document.getElementById('uploadResult').innerText = 'アップロード失敗しました';
+    document.getElementById('uploadResult').innerText = 'アップロード失敗';
     console.error('エラー:', error);
   }
 }
