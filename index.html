@@ -125,11 +125,13 @@ document.getElementById('uploadButton').addEventListener('click', () => {
 });
 
 
-// CSV文字列を配列に変換（ヘッダスキップ版）
+// CSV文字列を配列に変換（ヘッダスキップ＋クオート除去版）
 function parseCSV(text) {
   const rows = text.trim().split('\n');
   const dataRows = rows.slice(1); // 最初の1行（ヘッダ）を除外
-  return dataRows.map(row => row.split(','));
+  return dataRows.map(row => {
+    return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
+  });
 }
 
 
