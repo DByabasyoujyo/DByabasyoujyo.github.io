@@ -130,5 +130,65 @@
 </div>
 
 <script src="script.js"></script>
+
+<!-- Google APIロード -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<!-- Googleログインボタン -->
+<div style="margin-top: 30px;">
+  <button id="loginButton">Googleでログインしてスプレッドシートに登録</button>
+</div>
+
+<script>
+const CLIENT_ID = '374744279132-36vqeqdcms1ei8vbrpspmesjqsqg7c2p.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyBY-D0xi3QAaMQ3crvs8S0hvmG8fY8c4JA';  // すでに持ってるAPIキー！
+const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
+const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+
+const SPREADSHEET_ID = '1w915GAUC8xBumD6KQPmCX25PlghKi78V2TouDyfCMPA';  // あなたのシートID
+
+document.getElementById('loginButton').onclick = () => {
+  gapi.load('client:auth2', () => {
+    gapi.client.init({
+      apiKey: API_KEY,
+      clientId: CLIENT_ID,
+      discoveryDocs: DISCOVERY_DOCS,
+      scope: SCOPES
+    }).then(() => {
+      return gapi.auth2.getAuthInstance().signIn();
+    }).then(() => {
+      console.log("認証成功！");
+      writeData();  // 認証できたらスプレッドシートに書き込む！
+    }).catch(error => {
+      console.error("認証エラー:", error);
+    });
+  });
+};
+
+// データ書き込み関数
+function writeData() {
+  const values = [
+    ["テストアイテム", 1000, "ダイヤ", 200, 0, "テストショップ"]
+  ];
+
+  const body = {
+    values: values
+  };
+
+  gapi.client.sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "シート1!A:F",
+    valueInputOption: "USER_ENTERED",
+    resource: body
+  }).then(response => {
+    console.log("データ書き込み成功！", response);
+    alert("スプレッドシートに書き込み成功！🎉");
+  }, error => {
+    console.error("書き込みエラー:", error);
+  });
+}
+</script>
+
 </body>
 </html>
