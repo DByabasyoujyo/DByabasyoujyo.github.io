@@ -80,26 +80,6 @@ function maybeEnableButtons() {
   }
 }
 
-document.getElementById('loginButton').addEventListener('click', () => {
-  tokenClient.requestAccessToken();
-});
-
-document.getElementById('uploadButton').addEventListener('click', () => {
-  const fileInput = document.getElementById('csvFileInput');
-  if (!fileInput.files.length) {
-    alert('CSVファイルを選択してください');
-    return;
-  }
-  const file = fileInput.files[0];
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const text = e.target.result;
-    const data = parseCSV(text);
-    await uploadToSheet(data);
-  };
-  reader.readAsText(file);
-});
-
 function parseCSV(text) {
   const rows = text.trim().split('\n');
   const dataRows = rows.slice(1); // ヘッダスキップ
@@ -128,6 +108,26 @@ async function uploadToSheet(values) {
 window.onload = () => {
   gapiLoaded();
   gisLoaded();
+
+  document.getElementById('loginButton').addEventListener('click', () => {
+    tokenClient.requestAccessToken();
+  });
+
+  document.getElementById('uploadButton').addEventListener('click', () => {
+    const fileInput = document.getElementById('csvFileInput');
+    if (!fileInput.files.length) {
+      alert('CSVファイルを選択してください');
+      return;
+    }
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target.result;
+      const data = parseCSV(text);
+      await uploadToSheet(data);
+    };
+    reader.readAsText(file);
+  });
 };
 </script>
 
