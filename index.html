@@ -17,10 +17,17 @@
     th { background-color: #f0f0f0; }
     h1, h2 { margin-bottom: 20px; }
   </style>
+
+  <!-- Google APIライブラリ -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
+
+  <!-- PapaParseライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
 </head>
 <body>
+
 <h1>ヤバ少女 アイテム交換DB ＋ 比較ツール ＋ CSVアップロード</h1>
 
 <div class="card">
@@ -30,7 +37,7 @@
 
 <div class="card">
   <h2>CSVアップロード</h2>
-  <input type="file" id="csvFileInput" accept=".csv">
+  <input type="file" id="csvFileInput" accept=\".csv\">
   <button id="uploadButton" disabled>アップロード</button>
   <div id="uploadResult" style="margin-top: 10px;"></div>
 </div>
@@ -67,72 +74,4 @@ function gisLoaded() {
         console.error(tokenResponse);
         return;
       }
-      document.getElementById('uploadButton').disabled = false;
-    },
-  });
-  gisInited = true;
-  maybeEnableButtons();
-}
-
-function maybeEnableButtons() {
-  if (gapiInited && gisInited) {
-    document.getElementById('loginButton').disabled = false;
-  }
-}
-
-function parseCSV(text) {
-  const rows = text.trim().split('\n');
-  const dataRows = rows.slice(1); // ヘッダスキップ
-  return dataRows.map(row => {
-    return row.split(',').map(cell => {
-      return cell.replace(/^"(.*)"$/, '$1').trim(); // 前後の \" を除去
-    });
-  });
-}
-
-
-async function uploadToSheet(values) {
-  const body = { values };
-  try {
-    const response = await gapi.client.sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: "シート1!A:F",
-      valueInputOption: "USER_ENTERED",
-      resource: body,
-    });
-    document.getElementById('uploadResult').innerText = 'アップロード成功';
-    console.log('書き込み成功:', response);
-  } catch (error) {
-    document.getElementById('uploadResult').innerText = 'アップロード失敗';
-    console.error('エラー:', error);
-  }
-}
-
-window.onload = () => {
-  gapiLoaded();
-  gisLoaded();
-
-  document.getElementById('loginButton').addEventListener('click', () => {
-    tokenClient.requestAccessToken();
-  });
-
-  document.getElementById('uploadButton').addEventListener('click', () => {
-    const fileInput = document.getElementById('csvFileInput');
-    if (!fileInput.files.length) {
-      alert('CSVファイルを選択してください');
-      return;
-    }
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target.result;
-      const data = parseCSV(text);
-      await uploadToSheet(data);
-    };
-    reader.readAsText(file);
-  });
-};
-</script>
-
-</body>
-</html>
+      document.getElementBy
