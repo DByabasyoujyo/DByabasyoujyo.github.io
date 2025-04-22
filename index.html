@@ -84,9 +84,12 @@ function parseCSV(text) {
   const rows = text.trim().split('\n');
   const dataRows = rows.slice(1); // ヘッダスキップ
   return dataRows.map(row => {
-    return row.split(',').map(cell => cell.replace(/^"|"$/g, '').trim());
+    return row.split(',').map(cell => {
+      return cell.replace(/^"(.*)"$/, '$1').trim(); // 前後の \" を除去
+    });
   });
 }
+
 
 async function uploadToSheet(values) {
   const body = { values };
