@@ -128,7 +128,11 @@
 
   <div id="addResult" style="margin-top: 20px;"></div>
 </div>
-
+<!-- Googleログインボタン -->
+<div style="margin-top: 30px;">
+  <button id="loginButton">Googleでログインしてスプレッドシートに登録</button>
+</div>
+  
 <!-- Google APIロード -->
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -136,10 +140,7 @@
 <!-- その後に、自分のJS（script.jsとか、ログインコード）を読み込む -->
 <script src="script.js"></script>
 
-<!-- Googleログインボタン -->
-<div style="margin-top: 30px;">
-  <button id="loginButton">Googleでログインしてスプレッドシートに登録</button>
-</div>
+
 
 <script>
 const CLIENT_ID = '374744279132-36vqeqdcms1ei8vbrpspmesjqsqg7c2p.apps.googleusercontent.com';
