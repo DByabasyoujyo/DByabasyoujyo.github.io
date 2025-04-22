@@ -74,4 +74,71 @@ function gisLoaded() {
         console.error(tokenResponse);
         return;
       }
-      document.getElementBy
+      document.getElementById('uploadButton').disabled = false;
+    },
+  });
+  gisInited = true;
+  maybeEnableButtons();
+}
+
+function maybeEnableButtons() {
+  if (gapiInited && gisInited) {
+    document.getElementById('loginButton').disabled = false;
+  }
+}
+
+// CSVをパース（PapaParse使用）
+function parseCSV(text) {
+  const results = Papa.parse(text.trim(), {
+    header: false,
+    skipEmptyLines: true,
+  });
+  return results.data.slice(1); // 最初の行（ヘッダー）を無視
+}
+
+// スプレッドシートにアップロード
+async function uploadToSheet(values) {
+  const body = { values };
+  try {
+    const response = await gapi.client.sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "シート1!A:F",
+      valueInputOption: "USER_ENTERED",
+      resource: body,
+    });
+    document.getElementById('uploadResult').innerText = 'アップロード成功';
+    console.log('書き込み成功:', response);
+  } catch (error) {
+    document.getElementById('uploadResult').innerText = 'アップロード失敗';
+    console.error('エラー:', error);
+  }
+}
+
+window.onload = () => {
+  gapiLoaded();
+  gisLoaded();
+
+  document.getElementById('loginButton').addEventListener('click', () => {
+    tokenClient.requestAccessToken();
+  });
+
+  document.getElementById('uploadButton').addEventListener('click', () => {
+    const fileInput = document.getElementById('csvFileInput');
+    if (!fileInput.files.length) {
+      alert('CSVファイルを選んでください');
+      return;
+    }
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target.result;
+      const data = parseCSV(text);
+      await uploadToSheet(data);
+    };
+    reader.readAsText(file);
+  });
+};
+</script>
+
+</body>
+</html>
